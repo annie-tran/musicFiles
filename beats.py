@@ -39,17 +39,17 @@ a_tempo = aubio.tempo("default", win_s, hop_s, samplerate)
 # create a simple click sound
 click = 0.7 * np.sin(2. * np.pi * np.arange(hop_s) / hop_s * samplerate / 3000.)
 
-# # pyaudio callback
-# def pyaudio_callback(_in_data, _frame_count, _time_info, _status):
-#     samples, read = a_source()
-#     is_beat = a_tempo(samples)
-#     if is_beat:
-#         samples += click
-#         print ('tick') # avoid print in audio callback
-#     audiobuf = samples.tobytes()
-#     if read < hop_s:
-#         return (audiobuf, pyaudio.paComplete)
-#     return (audiobuf, pyaudio.paContinue)
+# pyaudio callback
+def pyaudio_callback(_in_data, _frame_count, _time_info, _status):
+    samples, read = a_source()
+    is_beat = a_tempo(samples)
+    if is_beat:
+        samples += click
+        print ('tick') # avoid print in audio callback
+    audiobuf = samples.tobytes()
+    if read < hop_s:
+        return (audiobuf, pyaudio.paComplete)
+    return (audiobuf, pyaudio.paContinue)
 
 # # create pyaudio stream with frames_per_buffer=hop_s and format=paFloat32
 # p = pyaudio.PyAudio()
