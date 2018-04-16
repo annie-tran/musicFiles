@@ -24,6 +24,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 filename = sys.argv[1]
+print(filename)
 
 samplerate = 0
 if len( sys.argv ) > 2: samplerate = int(sys.argv[2])
@@ -44,7 +45,7 @@ def pyaudio_callback(_in_data, _frame_count, _time_info, _status):
     is_beat = a_tempo(samples)
     if is_beat:
         samples += click
-        #print ('tick') # avoid print in audio callback
+        print ('tick') # avoid print in audio callback
     audiobuf = samples.tobytes()
     if read < hop_s:
         return (audiobuf, pyaudio.paComplete)
