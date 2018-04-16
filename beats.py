@@ -14,6 +14,17 @@ import time
 import pyaudio
 import aubio
 import numpy as np
+import subprocess
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BOARD)
+
+GPIO.setup(11, GPIO.OUT)
+
+p = GPIO.PWM(11, 50)
+
+p.start(7.5)
 
 win_s = 1024                # fft size
 hop_s = win_s // 2          # hop size
@@ -41,34 +52,42 @@ click = 0.7 * np.sin(2. * np.pi * np.arange(hop_s) / hop_s * samplerate / 3000.)
 
 # pyaudio callback
 def pyaudio_callback(_in_data, _frame_count, _time_info, _status):
+    toggle = true
     samples, read = a_source()
     is_beat = a_tempo(samples)
     if is_beat:
         samples += click
         print ('tick') # avoid print in audio callback
+        if toggle:
+            p.ChangeDutyCycle(4.5) 
+        else:
+            p.ChangeDutyCycle(7) 
+        toggle = !toggle
+
     audiobuf = samples.tobytes()
     if read < hop_s:
         return (audiobuf, pyaudio.paComplete)
     return (audiobuf, pyaudio.paContinue)
 
 # create pyaudio stream with frames_per_buffer=hop_s and format=paFloat32
-# p = pyaudio.PyAudio()
+p = pyaudio.PyAudio()
 pyaudio_format = pyaudio.paFloat32
 frames_per_buffer = hop_s
 n_channels = 1
-# stream = p.open(format=pyaudio_format, channels=n_channels, rate=samplerate,
-#         output=True, frames_per_buffer=frames_per_buffer,
-#         stream_callback=pyaudio_callback)
+stream = p.open(format=pyaudio_format, channels=n_channels, rate=samplerate,
+        output=True, frames_per_buffer=frames_per_buffer,
+        stream_callback=pyaudio_callback)
 
-# # start pyaudio stream
-# stream.start_stream()
+# start pyaudio stream
+stream.start_stream()
+subprocess.Popen("aplay drumloop.wav")
 
-# # wait for stream to finish
-# while stream.is_active():
-#     time.sleep(0.1)
+# wait for stream to finish
+while stream.is_active():
+    time.sleep(0.1)
 
-# # stop pyaudio stream
-# stream.stop_stream()
-# stream.close()
-# # close pyaudio
-# p.terminate()
+# stop pyaudio stream
+stream.stop_stream()
+stream.close()
+# close pyaudio
+p.terminate()
